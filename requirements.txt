@@ -1,4 +1,4 @@
+streamlit>=1.52.0
 pandas
-streamlit
 matplotlib
 seaborn
