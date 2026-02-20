@@ -17,7 +17,7 @@ if uploaded_files:
     # Lire les fichiers CSV
     data = {}
     for i, file in enumerate(uploaded_files):
-        data[f"fichier_{i+1}"] = pd.read_csv(file, sep=",")
+        data[f"fichier_{i+1}"] = pd.read_csv(file, sep=',')
 
     # Créer les onglets
     tab1, tab2, tab3 = st.tabs(["Aperçu des données", "Statistiques", "Visualisations"])
