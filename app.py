@@ -52,56 +52,13 @@ with tab1:
         file_to_analyze = st.selectbox("Choisir le fichier à analyser", list(data.keys()))
         df = data[file_to_analyze]
 
+        # Afficher toutes les données dans un tableau avec ascenseur
+        st.subheader(f"Données du fichier : {file_to_analyze}")
+        st.dataframe(df, height=300)  # `height` ajoute un ascenseur si nécessaire
+
         # Générer les dates et heures pour l'axe x
         start_date = datetime(2023, 1, 1, 0, 0)
         dates = [start_date + timedelta(hours=i) for i in range(len(df))]
         df["date"] = dates
 
-        # Afficher le graphe de l'évolution de la température
-        st.subheader(f"Évolution de la température pour {file_to_analyze}")
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(df["date"], df["temperature"], label="Température (°C)")
-        ax.set_xlabel("Date et heure")
-        ax.set_ylabel("Température (°C)")
-        ax.set_ylim(0, 50)
-        ax.grid(True)
-        ax.legend()
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
-
-        # Paramètres pour les seuils
-        st.subheader("Nombre d'heures où la température dépasse un seuil")
-        seuil = st.number_input("Seuil de température (°C)", value=30.0)
-
-        # Calculer le nombre d'heures où la température dépasse le seuil
-        heures_depasse = (df["temperature"] > seuil).sum()
-        st.write(f"Nombre d'heures où la température dépasse {seuil}°C : {heures_depasse}")
-    else:
-        st.warning("Veuillez charger au moins un fichier CSV.")
-
-# Onglet 2 : Comparaison
-with tab2:
-    st.header("Comparaison des fichiers")
-
-    if len(data) >= 2:
-        st.subheader("Comparaison mensuelle du RMSE")
-
-        # Sélection du fichier de référence
-        ref_name = st.selectbox("Choisir le fichier de référence", list(data.keys()))
-
-        if ref_name in data:
-            ref_data = data[ref_name]["temperature"].values
-            rmse_results = {}
-
-            for name, df in data.items():
-                if name != ref_name:
-                    test_data = df["temperature"].values
-                    rmse = calculer_rmse(ref_data, test_data)
-                    rmse_results[name] = rmse
-
-            # Afficher les résultats
-            st.write("RMSE par rapport au fichier de référence :")
-            for name, rmse in rmse_results.items():
-                st.write(f"- {name} : {rmse:.2f}")
-    else:
-        st.warning("Veuillez charger au moins deux fichiers pour effectuer une comparaison.")
+        # Afficher le graphe de l'évolution de
