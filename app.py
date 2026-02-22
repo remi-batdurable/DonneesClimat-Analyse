@@ -2,11 +2,31 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+
+# Fonction pour calculer le RMSE
+def calculer_rmse(serie_reference, serie_test):
+    """
+    Calcule le RMSE (Root Mean Square Error) entre deux séries de données.
+
+    Args:
+        serie_reference (array-like): Série de référence (observations).
+        serie_test (array-like): Série à comparer.
+
+    Returns:
+        float: Valeur du RMSE.
+    """
+    if len(serie_reference) != len(serie_test):
+        raise ValueError("Les séries doivent avoir la même longueur.")
+
+    differences = (serie_reference - serie_test) ** 2
+    moyenne_differences = np.mean(differences)
+    rmse = np.sqrt(moyenne_differences)
+
+    return rmse
 
 # Configuration de la page
 st.set_page_config(layout="wide")
-
-# Titre de l'application
 st.title("Analyse des Données Météorologiques")
 
 # Panneau latéral pour charger les fichiers
@@ -23,7 +43,8 @@ data = {}
 # Charger les fichiers dans des DataFrames
 for name, file in uploaded_files.items():
     if file is not None:
-        data[name] = pd.read_csv(file)
+        df = pd.read_csv(file, header=None, names=["temperature"])
+        data[name] = df
 
 # Onglets
 tab1, tab2 = st.tabs(["Analyse d'un fichier", "Comparaison"])
@@ -31,51 +52,53 @@ tab1, tab2 = st.tabs(["Analyse d'un fichier", "Comparaison"])
 # Onglet 1 : Analyse d'un fichier
 with tab1:
     st.header("Analyse d'un fichier")
-
-    # Sélection du fichier à analyser
     file_to_analyze = st.selectbox("Choisir le fichier à analyser", list(data.keys()))
 
     if file_to_analyze in data:
         df = data[file_to_analyze]
 
+        # Générer les dates et heures pour l'axe x
+        start_date = datetime(2023, 1, 1, 0, 0)  # Année de référence
+        dates = [start_date + timedelta(hours=i) for i in range(len(df))]
+        df["date"] = dates
+
         # Afficher le graphe de l'évolution de la température
         st.subheader(f"Évolution de la température pour {file_to_analyze}")
-        fig, ax = plt.subplots()
-        ax.plot(df)
-        ax.set_xlabel("Temps (heures)")
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(df["date"], df["temperature"], label="Température (°C)")
+        ax.set_xlabel("Date et heure")
         ax.set_ylabel("Température (°C)")
+        ax.set_ylim(0, 50)  # Échelle adaptée pour des températures max
+        ax.grid(True)
+        ax.legend()
+        plt.xticks(rotation=45)
         st.pyplot(fig)
 
         # Paramètres pour les seuils
-        st.subheader("Nombre de jours où la température dépasse un seuil")
+        st.subheader("Nombre d'heures où la température dépasse un seuil")
         seuil = st.number_input("Seuil de température (°C)", value=30.0)
 
-        # Calculer le nombre de jours où la température dépasse le seuil
-        jours_depasse = (df.iloc[:, 0] > seuil).sum()
-        st.write(f"Nombre d'heures où la température dépasse {seuil}°C : {jours_depasse}")
+        # Calculer le nombre d'heures où la température dépasse le seuil
+        heures_depasse = (df["temperature"] > seuil).sum()
+        st.write(f"Nombre d'heures où la température dépasse {seuil}°C : {heures_depasse}")
 
 # Onglet 2 : Comparaison
 with tab2:
     st.header("Comparaison des fichiers")
 
     if len(data) >= 2:
-        # Calcul du RMSE mensuel
         st.subheader("Comparaison mensuelle du RMSE")
 
-        # Supposons que les données sont au pas de temps horaire et sur une année
-        mois = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-                "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
-
-        # Exemple de calcul du RMSE entre deux fichiers (à adapter selon tes données)
+        # Exemple de calcul du RMSE entre deux fichiers
         ref_name = "référence"
         if ref_name in data:
-            ref_data = data[ref_name].iloc[:, 0].values
+            ref_data = data[ref_name]["temperature"].values
             rmse_results = {}
 
             for name, df in data.items():
                 if name != ref_name:
-                    test_data = df.iloc[:, 0].values
-                    rmse = np.sqrt(np.mean((ref_data - test_data) ** 2))
+                    test_data = df["temperature"].values
+                    rmse = calculer_rmse(ref_data, test_data)
                     rmse_results[name] = rmse
 
             # Afficher les résultats
