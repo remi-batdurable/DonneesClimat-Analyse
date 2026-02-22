@@ -39,7 +39,7 @@ data = {}
 # Charger les fichiers dans des DataFrames
 for name, file in uploaded_files.items():
     if file is not None:
-        df = pd.read_csv(file, header=None, names=["temperature"])
+        df = pd.read_csv(file, header=None, names=["temperature"], sep=',')
         data[name] = df
 
 # Onglets
